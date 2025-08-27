@@ -52,9 +52,9 @@ export default function AppFooter() {
                 <GraduationCap className="text-white w-6 h-6" />
               </div>
               <div>
-                <span className="text-xl font-bold">Harmony Heights</span>
+                <span className="text-xl font-bold">{process.env.NEXT_PUBLIC_APP_NAME}</span>
                 <div className="text-xs text-gray-400 -mt-1">
-                  School of Excellence
+                  Sekolah Keunggulan
                 </div>
               </div>
             </div>
