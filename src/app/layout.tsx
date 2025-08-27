@@ -21,7 +21,7 @@ export default function RootLayout({
         <AuthProvider>
           <LoadingLayout>
             <AppNavbar />
-            <main className="min-h-screen">
+            <main className="min-h-[calc(100vh-56px)]">
               {children}
             </main>
             <AppFooter />

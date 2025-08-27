@@ -37,12 +37,12 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="flex h-screen items-center justify-center bg-gray-100">
+        <div className="flex h-[calc(100vh-56px)] items-center justify-center bg-gray-100">
             <form
                 onSubmit={handleLogin}
                 className="bg-white p-6 rounded-xl shadow-md w-80"
             >
-                <h2 className="text-xl font-bold mb-4 text-center">Login</h2>
+                <h2 className="text-xl font-bold mb-4 text-center">Login Menggunakan Email Sekolah</h2>
                 {error && <p className="text-red-500 mb-2 text-center">{error}</p>}
                 <input
                     type="email"
