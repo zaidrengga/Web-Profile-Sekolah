@@ -1,9 +1,9 @@
 "use client";
 
 import { User } from "@/lib/types";
-import { createContext, useContext, useState, useEffect } from "react";
-import { getUser, postLogin, logoutCookie } from "@/lib/auth-actions";
-import { redirect } from "next/navigation";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 interface AuthContextProps {
     user: User | null;
@@ -15,73 +15,95 @@ interface AuthContextProps {
     setError: (error: string | null) => void;
 }
 
-const defaultValue: AuthContextProps = {
-    user: null,
-    isAuthenticated: false,
-    loading: true,
-    login: async () => false,
-    logout: async () => { },
-    error: null,
-    setError: () => { },
-};
-
-export const AuthContext = createContext<AuthContextProps>(defaultValue);
+const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
-    const [loading, setLoading] = useState<boolean>(true);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    const router = useRouter(); // ⬅️ aman, dipanggil selalu di level atas
     const isAuthenticated = !!user;
 
-    useEffect(() => {
-
-        async function loadUser() {
-            setLoading(true);
-            try {
-                const u = await getUser();
-                if (u) setUser(u as User);
-            } catch (err) {
-                console.error("Error loading user:", err);
-            } finally {
-                setLoading(false);
+    // Ambil user dari /api/auth/me
+    const loadUser = useCallback(async () => {
+        setLoading(true);
+        try {
+            const res = await fetch("/api/auth/me");
+            if (!res.ok) {
+                setUser(null);
+                return;
             }
+            const u = await res.json();
+            setUser(u.user as User);
+        } catch (err) {
+            console.error("Error loadUser:", err);
+            setUser(null);
+        } finally {
+            setLoading(false);
         }
-        loadUser();
     }, []);
 
-    const login = async (email: string, password: string) => {
+    useEffect(() => {
+        loadUser();
+    }, [loadUser]);
+
+    // Login
+    const login = async (email: string, password: string): Promise<boolean> => {
         if (!email || !password) {
             setError("Email & password wajib diisi");
+            toast.error("Email & password wajib diisi");
             return false;
         }
         setLoading(true);
         try {
-            const res = await postLogin(email, password);
-            if (!res) return false;
-            setUser(res as User);
+            const res = await fetch("/api/auth/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password }),
+            });
+
+            if (!res.ok) {
+                setError("Email atau password salah");
+                toast.error("Email atau password salah");
+                return false;
+            }
+
+            const u = await res.json();
+            setUser(u.user as User);
+            toast.success("Berhasil login");
+
+            // ⬅️ gunakan router.push, jangan redirect()
+            router.push("/dashboard");
             return true;
         } catch (err) {
+            console.error("login error:", err);
             setError("Error login");
-            console.error("Error login:", err);
+            toast.error("Error login");
             return false;
         } finally {
             setLoading(false);
         }
     };
 
+    // Logout
     const logout = async () => {
         setLoading(true);
         try {
-            await logoutCookie();
+            const res = await fetch("/api/auth/logout", { method: "POST" });
+            if (!res.ok) throw new Error("Error logout");
+            window.location.href = "/";
             setUser(null);
-            redirect("/login");
+            toast.success("Berhasil logout");
         } catch (err) {
-            console.error("Error logout:", err);
+            console.error("logout error:", err);
+            toast.error("Error logout");
         } finally {
             setLoading(false);
         }
     };
+
+
 
     return (
         <AuthContext.Provider
@@ -93,5 +115,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 }
 
 export function useAuth() {
-    return useContext(AuthContext);
+    const ctx = useContext(AuthContext);
+    if (!ctx) {
+        throw new Error("useAuth must be used within an AuthProvider");
+    }
+    return ctx;
 }

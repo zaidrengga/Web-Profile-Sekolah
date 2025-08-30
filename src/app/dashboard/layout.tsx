@@ -29,7 +29,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
     if (loading) return <Loading />
     if (!isAuthenticated) return redirect("/login")
     return (
-        <SidebarProvider >
+        <SidebarProvider className="min-h-[calc(100vh-56px)]">
             {/* Sidebar */}
             <AppSidebar />
 

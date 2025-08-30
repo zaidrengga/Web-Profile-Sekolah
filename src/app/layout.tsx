@@ -4,6 +4,7 @@ import AppNavbar from "@/components/AppNavbar";
 import AppFooter from "@/components/AppFooter";
 import { AuthProvider } from "@/hooks/use-auth";
 import LoadingLayout from "@/components/LoadingLayout";
+import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -22,6 +23,7 @@ export default function RootLayout({
           <LoadingLayout>
             <AppNavbar />
             <main className="min-h-[calc(100vh-56px)]">
+              <Toaster />
               {children}
             </main>
             <AppFooter />

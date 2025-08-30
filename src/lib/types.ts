@@ -86,3 +86,12 @@ export interface Blog {
   created_at: Date;
   updated_at: Date;
 }
+
+export interface Contact {
+  id: string;               // UUID
+  nama: string;             // Nama pengirim
+  email: string;            // Email pengirim
+  subject?: string | null;  // Optional, bisa null
+  message: string;          // Isi pesan
+  created_at?: string;      // Timestamp, bisa null / diisi otomatis
+}

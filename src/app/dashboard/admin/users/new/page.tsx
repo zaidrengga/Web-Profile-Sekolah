@@ -1,90 +1,76 @@
 "use client";
 
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
+import React from "react";
 import { useRouter } from "next/navigation";
 import { useCrud } from "@/hooks/use-crud";
 import { User } from "@/lib/types";
+import { FormCard } from "@/components/template/FormCard";
+import { RHFInput } from "@/components/template/RHFInput";
+import { RHFSelect } from "@/components/template/RHFSelect";
+import { UserRecord } from "../page";
+import { toast } from "sonner";
+import { useForm } from "react-hook-form";
 
 const AdminUserNewPage = () => {
-  const { add: addNewUser } = useCrud<User>("users");
+  const { items: users, add: addNewUser, loading } = useCrud<User>("users");
   const router = useRouter();
 
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [role, setRole] = useState<"admin" | "guru" | "siswa">("siswa");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const methods = useForm<UserRecord>();
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError(null);
-
-    if (!username || !email || !password) {
-      setError("Semua field wajib diisi");
-      return;
+  const handleSave = async (data: User) => {
+    if (!data.username || !data.email || !data.password || !data.role) {
+      toast.error("Semua field harus diisi");
+      throw new Error("Semua field harus diisi");
+    } else if (
+      users.some((user) => user.username === data.username) ||
+      users.some((user) => user.email === data.email)
+    ) {
+      toast.error("Username atau email sudah ada");
+      throw new Error("Username atau email sudah ada");
     }
 
-    setLoading(true);
-
     const success = await addNewUser({
-      id: crypto.randomUUID(),
-      username,
-      email,
-      password,
-      role,
+      ...data,
       image: null,
       created_at: new Date().toISOString(),
     });
-    setLoading(false);
 
     if (success) {
-      router.push("/dashboard/admin/users"); // redirect ke halaman user
+      toast.success("User berhasil ditambahkan");
+      router.push("/dashboard/admin/users");
     } else {
-      setError("Gagal menambahkan user");
+      toast.error("Gagal menambahkan user");
+      throw new Error("Gagal menambahkan user");
     }
   };
 
   return (
-    <div className="p-6 max-w-md mx-auto bg-white rounded-lg shadow-md mt-8">
-      <h1 className="text-2xl font-bold mb-4">Tambah User Baru</h1>
-      {error && <p className="text-red-500 mb-2">{error}</p>}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          type="text"
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          className="w-full p-2 border rounded"
-        />
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full p-2 border rounded"
-        />
-        <input
+    <div>
+      <FormCard<UserRecord>
+        title="Tambah User"
+        onSave={handleSave}
+        methods={methods}
+        loading={loading}
+      >
+        <RHFInput name="username" label="Username" placeholder="Username" />
+        <RHFInput name="email" label="Email" type="email" placeholder="Email" />
+        <RHFInput
+          name="password"
+          label="Password"
           type="password"
           placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full p-2 border rounded"
         />
-        <select
-          value={role}
-          onChange={(e) => setRole(e.target.value as "admin" | "guru" | "siswa")}
-          className="w-full p-2 border rounded"
-        >
-          <option value="admin">Admin</option>
-          <option value="guru">Guru</option>
-          <option value="siswa">Siswa</option>
-        </select>
-        <Button type="submit" disabled={loading} className="w-full">
-          {loading ? "Loading..." : "Tambah User"}
-        </Button>
-      </form>
+        <RHFSelect
+          name="role"
+          label="Role"
+          options={[
+            { label: "Admin", value: "admin" },
+            { label: "Guru", value: "guru" },
+            { label: "Siswa", value: "siswa" },
+          ]}
+          placeholder="Pilih Role"
+        />
+      </FormCard>
     </div>
   );
 };

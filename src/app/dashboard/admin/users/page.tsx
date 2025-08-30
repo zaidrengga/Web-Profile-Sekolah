@@ -1,139 +1,130 @@
 "use client"
 
+import { DataTable } from '@/components/template/DataTable';
+import { EditDialog } from '@/components/template/EditDialog';
+import { RHFInput } from '@/components/template/RHFInput';
+import { RHFSelect } from '@/components/template/RHFSelect';
 import { Button } from '@/components/ui/button';
 import Loading from '@/components/ui/loading';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useCrud } from '@/hooks/use-crud';
 import { User } from '@/lib/types';
-import { Pen, Plus, Trash } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import Link from 'next/link';
 import React, { useState } from 'react';
+import { toast } from 'sonner';
+
+export type UserRecord = Partial<Record<string, unknown>> & User;
 
 const AdminUsersPage = () => {
-    const [filter, setFilter] = useState<string>("all");
-    const [usersFilter, setUsersFilter] = useState<User[]>([]);
     const { items: users, loading, remove: removeUser, update: editUser } = useCrud<User>("users");
 
+    const [editOpen, setEditOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<User | null>(null);
-    const [editUsername, setEditUsername] = useState("");
-    const [editRole, setEditRole] = useState<User['role']>('siswa');
-
-    React.useEffect(() => {
-        if (filter === "all") setUsersFilter(users);
-        if (filter === "admin") setUsersFilter(users.filter((user) => user.role === "admin"));
-        if (filter === "guru") setUsersFilter(users.filter((user) => user.role === "guru"));
-        if (filter === "siswa") setUsersFilter(users.filter((user) => user.role === "siswa"));
-    }, [filter, users]);
 
     const handleDelete = async (id: User["id"]) => {
         const confirmed = confirm("Apakah yakin ingin menghapus user ini?");
         if (!confirmed) return;
-
         await removeUser(id);
+        toast.success("User berhasil dihapus");
     };
 
-    const handleEditSave = async () => {
+    const handleEdit = (user: User) => {
+        setEditingUser(user);
+        setEditOpen(true);
+    };
+
+    const handleEditSave = async (data: UserRecord) => {
         if (!editingUser) return;
-        await editUser(editingUser.id!, { username: editUsername, role: editRole });
-        setEditingUser(null);
+        try {
+            const response = await editUser(editingUser.id, {
+                username: data.username,
+                email: data.email,
+                password: data.password,
+                role: data.role,
+            });
+            if (response) {
+                window.location.reload();
+                setEditingUser(null);
+                toast.success("User berhasil diubah");
+                setEditOpen(false);
+            } else {
+                toast.error("Gagal mengubah user");
+            }
+        } catch (error) {
+            console.error("handleEditSave error:", error);
+            toast.error("Gagal mengubah user");
+        }
     };
 
     if (loading) return <Loading />
-
     return (
         <div className="w-full p-4 space-y-4 ">
             <div className="w-full flex justify-between">
                 <h1 className='text-2xl font-bold'>Kelola User</h1>
-                <p>Total User : {users.length}</p>
-            </div>
-
-            <div className="w-full flex justify-between">
-                <div className="flex items-center gap-2">
-                    <Button variant={filter === "all" ? "default" : "outline"} onClick={() => setFilter("all")}>All</Button>
-                    <Button variant={filter === "admin" ? "default" : "outline"} onClick={() => setFilter("admin")}>Admin</Button>
-                    <Button variant={filter === "guru" ? "default" : "outline"} onClick={() => setFilter("guru")}>Guru</Button>
-                    <Button variant={filter === "siswa" ? "default" : "outline"} onClick={() => setFilter("siswa")}>Siswa</Button>
+                <div className="flex items-center space-x-2">
+                    <Button asChild>
+                        <Link href="/dashboard/admin/users/new">
+                            <Plus />
+                            <span>Tambah User</span>
+                        </Link>
+                    </Button>
                 </div>
-
-                <Button asChild >
-                    <Link href="/dashboard/admin/users/new">Tambah User <Plus /></Link>
-                </Button>
             </div>
 
-            <div className='border rounded-lg overflow-hidden overflow-x-auto shadow-md'>
-                <Table>
-                    <TableHeader>
-                        <TableRow className='bg-gray-200'>
-                            <TableHead className="w-[100px]">No</TableHead>
-                            <TableHead>Username</TableHead>
-                            <TableHead>Email</TableHead>
-                            <TableHead>Role</TableHead>
-                            <TableHead className='text-right'>Action</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {usersFilter.map((user, index) => (
-                            <TableRow key={user.id}>
-                                <TableCell className="font-medium">{index + 1}</TableCell>
-                                <TableCell className="font-medium">{user.username}</TableCell>
-                                <TableCell className="font-medium">{user.email}</TableCell>
-                                <TableCell className="font-medium">{user.role}</TableCell>
-                                <TableCell className="font-medium text-right">
-                                    <div className="flex items-center justify-end gap-2">
-                                        <Button
-                                            variant="outline"
-                                            size="icon"
-                                            onClick={() => {
-                                                setEditingUser(user);
-                                                setEditUsername(user.username);
-                                                setEditRole(user.role);
-                                            }}
-                                        >
-                                            <Pen />
-                                        </Button>
-                                        <Button
-                                            variant="destructive"
-                                            size="icon"
-                                            onClick={() => handleDelete(user.id!)}
-                                        >
-                                            <Trash />
-                                        </Button>
-                                    </div>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+            <div>
+                <DataTable
+                    data={users}
+                    columns={[
+                        { accessorKey: "username", header: "Username" },
+                        { accessorKey: "email", header: "Email" },
+                        { accessorKey: "role", header: "Role" },
+                    ]}
+                    onEdit={handleEdit}
+                    onDelete={(id) => handleDelete(id.toString())}
+                    searchKeys={["username", "email"]}
+                    filterKey={{ label: "Role", value: "role" }}
+                    filterOptions={[
+                        { label: "Admin", value: "admin" },
+                        { label: "Guru", value: "guru" },
+                        { label: "Siswa", value: "siswa" },
+                    ]}
+                    columnHeaderMap={{
+                        username: "Username",
+                        email: "Email",
+                        password: "Password",
+                        role: "Role",
+                    }}
+                />
             </div>
 
-            {/* Modal Edit sederhana */}
-            {editingUser && (
-                <div className="fixed inset-0 bg-foreground/20 bg-opacity-40 flex items-center justify-center z-50">
-                    <div className="bg-background p-6 rounded-lg w-96 shadow-lg space-y-4">
-                        <h2 className="text-lg font-bold">Edit User</h2>
-                        <input
-                            type="text"
-                            value={editUsername}
-                            onChange={(e) => setEditUsername(e.target.value)}
-                            className="w-full p-2 border rounded"
-                            placeholder="Username"
-                        />
-                        <select
-                            value={editRole}
-                            onChange={(e) => setEditRole(e.target.value as User['role'])}
-                            className="w-full p-2 border rounded"
-                        >
-                            <option value="admin">Admin</option>
-                            <option value="guru">Guru</option>
-                            <option value="siswa">Siswa</option>
-                        </select>
-                        <div className="flex justify-end gap-2">
-                            <Button onClick={() => setEditingUser(null)} variant="outline">Cancel</Button>
-                            <Button onClick={handleEditSave}>Save</Button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <EditDialog<UserRecord>
+                open={editOpen}
+                onClose={() => {
+                    setEditOpen(false);
+                    setEditingUser(null);
+                }}
+                onSave={handleEditSave}
+                title="Edit User"
+                defaultValues={{
+                    username: editingUser?.username,
+                    email: editingUser?.email,
+                    password: editingUser?.password,
+                    role: editingUser?.role
+                }}
+            >
+                <RHFInput name="username" label="Username" placeholder="Masukkan username" />
+                <RHFInput name="email" type="email" label="Email" placeholder="Masukkan email" />
+                <RHFInput name="password" type="password" label="Password" placeholder="Masukkan password" />
+                <RHFSelect
+                    name="role"
+                    label="Role"
+                    options={[
+                        { label: "Admin", value: "admin" },
+                        { label: "Guru", value: "guru" },
+                        { label: "Siswa", value: "siswa" },
+                    ]}
+                />
+            </EditDialog>
         </div>
     )
 }

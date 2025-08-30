@@ -1,4 +1,4 @@
-import { useCrud } from '@/hooks/use-crud';
+
 import {
   Award,
   Trophy,
@@ -15,15 +15,13 @@ import {
   Star,
 } from 'lucide-react';
 import React from 'react'
-import { Siswa } from './types';
 
 export const DataListContent = () => {
-  const { items: siswas } = useCrud<Siswa>("siswas");
 
   const stats = [
     {
       icon: <Users size={32} />,
-      value: `${siswas.length}+`,
+      value: `500+`,
       label: "Siswa",
     },
     {

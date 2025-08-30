@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation"
 import { Button } from "./ui/button"
 import { useState } from "react"
 import { useAuth } from "@/hooks/use-auth"
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "./ui/sheet"
 
 const links = [
     { label: "Home", href: "/" },
@@ -81,25 +82,30 @@ const AppNavbar = () => {
                         <AlignRight />
                     </Button>
 
-                    <ul
-                        className={`absolute  top-14 left-0 w-full border-t bg-white shadow-md p-4 md:hidden flex flex-col gap-2 transform transition-all duration-300 ease-in-out
-                             ${open ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-full pointer-events-none"}`}
-                    >
-                        {links.map((link, idx) => {
-                            const isActive = pathname === link.href
-                            return (
-                                <li key={idx} className="w-full">
-                                    <Button
-                                        asChild
-                                        variant={isActive ? "secondary" : "outline"}
-                                        className="w-full flex justify-start"
-                                    >
-                                        <Link href={link.href} onClick={() => setOpen(false)}>{link.label}</Link>
-                                    </Button>
-                                </li>
-                            )
-                        })}
-                    </ul>
+                    <Sheet open={open} onOpenChange={setOpen}>
+                        <SheetContent>
+                            <SheetHeader>
+                                <SheetTitle>{process.env.NEXT_PUBLIC_APP_NAME}</SheetTitle>
+                                <SheetDescription>Sekolah Keunggulan</SheetDescription>
+                            </SheetHeader>
+                            <div className="flex flex-col gap-2 p-2">
+                                {links.map((link, idx) => {
+                                    const isActive = pathname === link.href
+                                    return (
+                                        <Button
+                                            key={idx}
+                                            variant={isActive ? "default" : "outline"}
+                                            size="sm"
+                                            className="w-full flex justify-start"
+                                            asChild
+                                        >
+                                            <Link onClick={() => setOpen(false)} href={link.href}>{link.label}</Link>
+                                        </Button>
+                                    )
+                                })}
+                            </div>
+                        </SheetContent>
+                    </Sheet>
                 </div>
             </nav>
         </header>

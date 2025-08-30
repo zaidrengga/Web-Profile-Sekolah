@@ -1,25 +1,38 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Loading from "@/components/LoadingLayout";
 import { useAuth } from "@/hooks/use-auth";
 
 export default function DashboardPage() {
   const router = useRouter();
-
   const { user, loading } = useAuth();
+  const [navigating, setNavigating] = useState(false);
 
   useEffect(() => {
-    if (!loading) { // tunggu user selesai load
+    if (!loading && !navigating) {
       if (!user) {
-        router.push("/login");
+        setNavigating(true);
+        router.replace("/login");
       } else {
-        if (user.role === "admin") router.push("/dashboard/admin");
-        if (user.role === "guru") router.push("/dashboard/guru");
-        if (user.role === "siswa") router.push("/dashboard/siswa");
+        setNavigating(true);
+        switch (user.role) {
+          case "admin":
+            router.replace("/dashboard/admin");
+            break;
+          case "guru":
+            router.replace("/dashboard/guru");
+            break;
+          case "siswa":
+            router.replace("/dashboard/siswa");
+            break;
+          default:
+            router.replace("/login"); // fallback
+        }
       }
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, navigating]);
 
-  return <Loading>.</Loading>;
+  // Tampilkan loader selama cek auth / redirect
+  return <Loading>Loading...</Loading>;
 }

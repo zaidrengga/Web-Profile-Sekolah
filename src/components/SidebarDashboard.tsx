@@ -13,7 +13,7 @@ import {
 
 import { useAuth } from "../hooks/use-auth";
 import Link from "next/link";
-import { CalendarCheck, Clipboard, Home, School, User, Users } from "lucide-react";
+import { CalendarCheck, Clipboard, Home, Images, MessageCircle, Rss, School, User, Users } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { Button } from "./ui/button";
 
@@ -36,14 +36,14 @@ export function AppSidebar() {
             { label: "Siswa", href: "/dashboard/admin/siswa", icon: <User size={20} /> },
             { label: "Guru", href: "/dashboard/admin/guru", icon: <User size={20} /> },
             { label: "Kelas", href: "/dashboard/admin/kelas", icon: <School size={20} /> },
-            { label: "Jadwal & Mapel", href: "/dashboard/admin/jadwal&mapel", icon: <CalendarCheck size={20} /> },
-            { label: "Absensi", href: "/dashboard/admin/absensi", icon: <Clipboard size={20} /> },
+            { label: "Blog", href: "/dashboard/admin/blog", icon: <Rss size={20} /> },
+            { label: "Gallery", href: "/dashboard/admin/gallery", icon: <Images size={20} /> },
+            { label: "Contact", href: "/dashboard/admin/contact", icon: <MessageCircle size={20} /> },
         ];
     } else if (user?.role === "guru") {
         menu = [
             { label: "Overview", href: "/dashboard/guru", icon: <Home size={20} /> },
-            { label: "Jadwal Mengajar", href: "/dashboard/guru/jadwal", icon: <CalendarCheck size={20} /> },
-            { label: "Input Absensi", href: "/dashboard/guru/absensi", icon: <Clipboard size={20} /> },
+            { label: "Jadwal & Absensi", href: "/dashboard/guru/jadwal&absensi", icon: <CalendarCheck size={20} /> },
         ];
     } else if (user?.role === "siswa") {
         menu = [

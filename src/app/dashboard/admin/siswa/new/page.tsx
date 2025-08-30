@@ -1,154 +1,94 @@
 "use client";
 
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import Loading from "@/components/ui/loading";
+import React from "react";
 import { useRouter } from "next/navigation";
-import { Kelas, Siswa, User } from "@/lib/types";
+import Loading from "@/components/ui/loading";
 import { useCrud } from "@/hooks/use-crud";
+import { Kelas, Siswa, User } from "@/lib/types";
+import { FormCard } from "@/components/template/FormCard";
+import { RHFSelect } from "@/components/template/RHFSelect";
+import { RHFInput } from "@/components/template/RHFInput";
+import { RHFSelectSearchable } from "@/components/template/RHFSelectSearchable";
+import { useForm } from "react-hook-form";
+import { SiswaRecord } from "../page";
+import { toast } from "sonner";
 
 const AdminSiswaNewPage = () => {
-    const { add: createSiswa, loading: siswasLoading } = useCrud<Siswa>("siswas");
+    const { items: siswas, add: createSiswa, loading: siswasLoading } = useCrud<Siswa>("siswas");
     const { items: users, loading: usersLoading } = useCrud<User>("users");
     const { items: kelas, loading: kelasLoading } = useCrud<Kelas>("kelas");
-    const [userId, setUserId] = useState("");
-    const [nama, setNama] = useState("");
-    const [nisn, setNisn] = useState("");
-    const [alamat, setAlamat] = useState("");
-    const [telepon, setTelepon] = useState("");
-    const [kelasId, setKelasId] = useState("");
-    const [error, setError] = useState<string | null>(null);
-    const [loading, setLoading] = useState(false);
     const router = useRouter();
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const methods = useForm<SiswaRecord>();
 
-        if (!userId || !nama || !nisn || !kelasId) {
-            setError("User, Nama, NISN, dan Kelas wajib diisi");
+    const handleSave = async (data: Siswa) => {
+        if (!data.user_id || !data.nama || !data.nisn || !data.kelas_id) {
+            toast.error("Semua field wajib diisi");
             return;
-        }
+        } else if (siswas.some((s) => s.nisn === data.nisn)) {
+            toast.error("NISN sudah ada");
+            return;
+        } else if (siswas.some((s) => s.user_id === data.user_id)) {
+            toast.error("User sudah ada");
+            return;
+        } 
 
-        setLoading(true);
-        try {
-            // 1. buat siswa
-            const siswa = await createSiswa({
-                id: crypto.randomUUID(),
-                user_id: userId,
-                nama,
-                nisn,
-                alamat,
-                kelas_id: kelasId,
-                telepon_wali: telepon,
-            });
+        const siswa = await createSiswa({
+            ...data,
+            id: crypto.randomUUID(),
+            alamat: data.alamat ?? null,
+            telepon_wali: data.telepon_wali ?? null,
+        });
 
-            if (siswa) {
-                router.push("/dashboard/admin/siswas");
-            } else {
-                setError("Gagal menambahkan siswa");
-            }
-        } catch (err) {
-            console.error(err);
-            setError("Terjadi kesalahan");
-        } finally {
-            setLoading(false);
+        if (siswa) {
+            router.push("/dashboard/admin/siswa");
+            toast.success("Siswa berhasil ditambahkan");
+        } else {
+            toast.error("Gagal menambahkan siswa");
+            throw new Error("Gagal menambahkan siswa");
         }
     };
 
     if (siswasLoading || usersLoading || kelasLoading) return <Loading />;
 
     return (
-        <div className="max-w-md mx-auto p-6 bg-white rounded-xl shadow-md space-y-4">
-            <h1 className="text-2xl font-bold">Tambah Siswa Baru</h1>
-            {error && <p className="text-red-500">{error}</p>}
+        <div>
+            <FormCard<SiswaRecord>
+                title="Tambah Siswa Baru"
+                onSave={handleSave}
+                methods={methods}
+                loading={siswasLoading}
+            >
+                <RHFSelectSearchable<SiswaRecord>
+                    name="user_id"
+                    label="User"
+                    placeholder="-- Pilih User --"
+                    options={users.map((u) => ({
+                        label: u.username || "",
+                        value: u.id,
+                    }))}
+                    control={methods.control}
+                />
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Pilih User */}
-                <div>
-                    <label className="block mb-1 font-medium">User</label>
-                    <select
-                        value={userId}
-                        onChange={(e) => setUserId(e.target.value)}
-                        className="w-full p-2 border rounded"
-                    >
-                        <option value="">-- Pilih User --</option>
-                        {users.map((u) => (
-                            <option key={u.id} value={u.id}>
-                                {u.email}
-                            </option>
-                        ))}
-                    </select>
-                </div>
+                <RHFInput name="nama" label="Nama" placeholder="Masukkan nama siswa" />
+                <RHFInput name="nisn" label="NISN" placeholder="Masukkan NISN" />
+                <RHFInput name="alamat" label="Alamat" placeholder="Masukkan alamat" />
+                <RHFInput
+                    name="telepon_wali"
+                    label="Telepon Wali"
+                    placeholder="Masukkan nomor telepon wali"
+                />
 
-                {/* Nama */}
-                <div>
-                    <label className="block mb-1 font-medium">Nama</label>
-                    <input
-                        type="text"
-                        value={nama}
-                        onChange={(e) => setNama(e.target.value)}
-                        className="w-full p-2 border rounded"
-                        placeholder="Masukkan nama siswa"
-                    />
-                </div>
-
-                {/* NISN */}
-                <div>
-                    <label className="block mb-1 font-medium">NISN</label>
-                    <input
-                        type="text"
-                        value={nisn}
-                        onChange={(e) => setNisn(e.target.value)}
-                        className="w-full p-2 border rounded"
-                        placeholder="Masukkan NISN"
-                    />
-                </div>
-
-                {/* Alamat */}
-                <div>
-                    <label className="block mb-1 font-medium">Alamat</label>
-                    <input
-                        type="text"
-                        value={alamat ?? ""}
-                        onChange={(e) => setAlamat(e.target.value)}
-                        className="w-full p-2 border rounded"
-                        placeholder="Masukkan alamat"
-                    />
-                </div>
-
-                {/* Telepon */}
-                <div>
-                    <label className="block mb-1 font-medium">Telepon Wali</label>
-                    <input
-                        type="text"
-                        value={telepon ?? ""}
-                        onChange={(e) => setTelepon(e.target.value)}
-                        className="w-full p-2 border rounded"
-                        placeholder="Masukkan nomor telepon wali"
-                    />
-                </div>
-
-                {/* Pilih Kelas */}
-                <div>
-                    <label className="block mb-1 font-medium">Kelas</label>
-                    <select
-                        value={kelasId}
-                        onChange={(e) => setKelasId(e.target.value)}
-                        className="w-full p-2 border rounded"
-                    >
-                        <option value="">-- Pilih Kelas --</option>
-                        {kelas.map((k: Kelas) => (
-                            <option key={k.id} value={k.id}>
-                                {k.nama_kelas}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-
-                <Button type="submit" disabled={loading}>
-                    {loading ? "Menyimpan..." : "Tambah Siswa"}
-                </Button>
-            </form>
+                <RHFSelect
+                    name="kelas_id"
+                    label="Kelas"
+                    placeholder="-- Pilih Kelas --"
+                    options={kelas.map((k) => ({
+                        label: k.nama_kelas,
+                        value: k.id,
+                    }))}
+                />
+            </FormCard>
         </div>
     );
 };

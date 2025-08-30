@@ -1,20 +1,26 @@
 "use client";
 
 import Loading from '@/components/ui/loading';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Guru, Kelas } from '@/lib/types';
-import { Pen, Plus, Trash2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useCrud } from '@/hooks/use-crud';
+import { DataTable } from '@/components/template/DataTable';
+import React, { useState } from 'react';
+import { EditDialog } from '@/components/template/EditDialog';
+import { RHFInput } from '@/components/template/RHFInput';
+import { RHFSelect } from '@/components/template/RHFSelect';
+import { toast } from 'sonner';
+
+export type KelasRecord = Partial<Record<string, unknown>> & Kelas;
 
 const AdminKelasPage = () => {
     const { items: kelas, loading, remove: removeKelas, update: editKelas } = useCrud<Kelas>("kelas");
     const { items: gurus, loading: loadingGurus } = useCrud<Guru>("gurus");
+
+    const [openEdit, setOpenEdit] = useState(false);
     const [editingKelas, setEditingKelas] = useState<Kelas | null>(null);
-    const [editNamaKelas, setEditNamaKelas] = useState("");
-    const [editWaliKelas, setEditWaliKelas] = useState("");
 
     const handleDelete = async (id: Kelas["id"]) => {
         const confirmed = confirm("Apakah yakin ingin menghapus kelas ini?");
@@ -22,10 +28,39 @@ const AdminKelasPage = () => {
         await removeKelas(id);
     };
 
-    const handleEditSave = async () => {
+    // dipanggil saat klik Edit
+    const handleEdit = (kelas: Kelas) => {
+        setEditingKelas(kelas);
+        setOpenEdit(true);
+    };
+
+    const handleEditSave = async (data: KelasRecord) => {
         if (!editingKelas) return;
-        await editKelas(editingKelas.id, { nama_kelas: editNamaKelas, wali_kelas_id: editWaliKelas });
-        setEditingKelas(null);
+        if (!data.nama_kelas || !data.tahun_ajaran || !data.wali_kelas_id) {
+            toast.error("Semua field wajib diisi");
+            return;
+        } else if (gurus.some((g) => g.id === data.wali_kelas_id)) {
+            toast.error("Guru sudah ada");
+            return;
+        }
+        try {
+            const response = await editKelas(editingKelas.id, {
+                nama_kelas: data.nama_kelas,
+                tahun_ajaran: data.tahun_ajaran,
+                wali_kelas_id: data.wali_kelas_id,
+            });
+            if (response) {
+                window.location.reload();
+                setEditingKelas(null);
+                toast.success("Kelas berhasil diubah");
+                setOpenEdit(false);
+            } else {
+                toast.error("Gagal mengubah kelas");
+            }
+        } catch (error) {
+            console.error("handleEditSave error:", error);
+            toast.error("Gagal mengubah kelas");
+        }
     };
 
     if (loading || loadingGurus) return <Loading />;
@@ -39,81 +74,64 @@ const AdminKelasPage = () => {
                 </Button>
             </div>
 
-            <div className='rounded-lg border shadow-md overflow-hidden'>
-                <Table>
-                    <TableHeader className='bg-foreground/10'>
-                        <TableRow>
-                            <TableHead>Nama Kelas</TableHead>
-                            <TableHead>Tahun Ajaran</TableHead>
-                            <TableHead>Wali Kelas</TableHead>
-                            <TableHead className="text-right">Aksi</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {kelas.map((k) => (
-                            <TableRow key={k.id}>
-                                <TableCell>{k.nama_kelas}</TableCell>
-                                <TableCell>{k.tahun_ajaran}</TableCell>
-                                <TableCell>{gurus.find((g) => g.id === k.wali_kelas_id)?.nama}</TableCell>
-                                <TableCell className="text-right">
-                                    <div className="flex justify-end gap-2">
-                                        <Button
-                                            variant="outline"
-                                            size="icon"
-                                            onClick={() => {
-                                                setEditingKelas(k);
-                                                setEditNamaKelas(k.nama_kelas);
-                                                setEditWaliKelas(k.wali_kelas_id || "");
-                                            }}
-                                        >
-                                            <Pen />
-                                        </Button>
-                                        <Button
-                                            variant="destructive"
-                                            size="icon"
-                                            onClick={() => handleDelete(k.id!)}
-                                        >
-                                            <Trash2 />
-                                        </Button>
-                                    </div>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+            <div>
+                <DataTable
+                    data={kelas}
+                    columns={[
+                        { header: "Kelas", accessorKey: "nama_kelas" },
+                        { header: "Tahun Ajaran", accessorKey: "tahun_ajaran" },
+                        {
+                            header: "Wali Kelas",
+                            accessorKey: "wali_kelas_id",
+                            cell: ({ row }) => {
+                                const waliKelasId = row.original.wali_kelas_id;
+                                return gurus.find(e => e.id === waliKelasId)?.nama ?? "-";
+                            },
+                        },
+                    ]}
+                    onEdit={handleEdit}
+                    onDelete={(id) => handleDelete(id as string)}
+                    onDetails={(id) => `/dashboard/admin/kelas/${id}`}
+                    searchKeys={['nama_kelas']}
+                    filterKey={{ label: "Tahun Ajaran", value: "tahun_ajaran" }}
+                    filterOptions={
+                        Array.from(new Set(kelas.map(k => k.tahun_ajaran)))
+                            .map(tahun => ({ label: tahun, value: tahun }))
+                    }
+                    relationMap={{
+                        wali_kelas_id: gurus.map(g => ({ label: g.nama, id: g.id })),
+                    }}
+                    columnHeaderMap={{
+                        nama_kelas: "Nama Kelas",
+                        tahun_ajaran: "Tahun Ajaran",
+                        wali_kelas_id: "Wali Kelas"
+                    }}
+                />
             </div>
 
             {/* Modal Edit */}
-            {editingKelas && (
-                <div className="fixed inset-0 bg-foreground/30  flex items-center justify-center z-50">
-                    <div className="bg-background p-6 rounded-lg w-96 shadow-lg space-y-4">
-                        <h2 className="text-lg font-bold">Edit Kelas</h2>
-                        <input
-                            type="text"
-                            value={editNamaKelas}
-                            onChange={(e) => setEditNamaKelas(e.target.value)}
-                            className="w-full p-2 border rounded"
-                            placeholder="Nama Kelas"
-                        />
-                        <select
-                            value={editWaliKelas}
-                            onChange={(e) => setEditWaliKelas(e.target.value)}
-                            className="w-full p-2 border rounded"
-                        >
-                            <option value="">Pilih Wali Kelas</option>
-                            {gurus.map(u => (
-                                <option key={u.id} value={u.id}>{u.nama}</option>
-                            ))}
-                        </select>
-                        <div className="flex justify-end gap-2">
-                            <Button onClick={() => setEditingKelas(null)} variant="outline">Cancel</Button>
-                            <Button onClick={handleEditSave}>Save</Button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <EditDialog<KelasRecord>
+                open={openEdit}
+                onClose={() => setOpenEdit(false)}
+                onSave={handleEditSave}
+                title="Edit Kelas"
+                defaultValues={{
+                    nama_kelas: editingKelas?.nama_kelas,
+                    tahun_ajaran: editingKelas?.tahun_ajaran,
+                    wali_kelas_id: editingKelas?.wali_kelas_id
+                }}
+            >
+                <RHFInput name="nama_kelas" label="Nama Kelas" placeholder="Nama Kelas" />
+                <RHFInput name="tahun_ajaran" label="Tahun Ajaran" placeholder="Tahun Ajaran" />
+                <RHFSelect
+                    name="wali_kelas_id"
+                    label="Wali Kelas"
+                    placeholder="Wali Kelas"
+                    options={gurus.map((g) => ({ label: g.nama, value: g.id }))}
+                />
+            </EditDialog>
         </div>
-    )
-}
+    );
+};
 
 export default AdminKelasPage;
