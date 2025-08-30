@@ -1,14 +1,14 @@
 import { supabase } from "@/lib/supabase/client";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 /**
  * GET all data
  */
 export async function GET(
-    req: Request,
-    context: { params: { table: string } }
+    req: NextRequest,
+    { params }: { params: { table: string } }
 ) {
-    const { table } = await context.params;
+    const { table } = params; // tidak perlu await
 
     try {
         const { data, error } = await supabase.from(table).select("*");
@@ -24,10 +24,10 @@ export async function GET(
  * POST (create new row)
  */
 export async function POST(
-    req: Request,
-    context: { params: { table: string } }
+    req: NextRequest,
+    { params }: { params: { table: string } }
 ) {
-    const { table } = await context.params;
+    const { table } = params; // tidak perlu await
 
     try {
         const body = await req.json();

@@ -1,17 +1,21 @@
 import { supabase } from "@/lib/supabase/client";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 /**
  * GET by ID
  */
 export async function GET(
-    req: Request,
-    context: { params: { table: string, id: string } }
+    req: NextRequest,
+    { params }: { params: { table: string; id: string } }
 ) {
-    const { table, id } = await context.params;
+    const { table, id } = params; // tidak perlu await
 
     try {
-        const { data, error } = await supabase.from(table).select("*").eq("id", id).single();
+        const { data, error } = await supabase
+            .from(table)
+            .select("*")
+            .eq("id", id)
+            .single();
         if (error) throw error;
 
         return NextResponse.json(data);
@@ -25,10 +29,10 @@ export async function GET(
  * PATCH (update row)
  */
 export async function PATCH(
-    req: Request,
-    context: { params: { table: string, id: string } }
+    req: NextRequest,
+    { params }: { params: { table: string; id: string } }
 ) {
-    const { table, id } = await context.params;
+    const { table, id } = params;
 
     try {
         const body = await req.json();
@@ -46,7 +50,7 @@ export async function PATCH(
  * DELETE
  */
 export async function DELETE(
-    req: Request,
+    req: NextRequest,
     { params }: { params: { table: string; id: string } }
 ) {
     const { table, id } = params;
