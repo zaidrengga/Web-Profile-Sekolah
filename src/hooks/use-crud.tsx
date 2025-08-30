@@ -13,7 +13,7 @@ export function useCrud<T extends { id: string }>(table: string) {
         const fetchAll = async () => {
             setLoading(true);
             try {
-                const res = await fetch(`/api/crud/${table}`);
+                const res = await fetch(`/api/crud?table=${table}`);
                 if (!res.ok) throw new Error("Gagal fetch data");
                 const data = await res.json();
                 setItems(Array.isArray(data) ? data : []);
@@ -31,18 +31,14 @@ export function useCrud<T extends { id: string }>(table: string) {
     // --- ADD ---
     const add = async (item: T): Promise<boolean> => {
         try {
-            const res = await fetch(`/api/crud/${table}`, {
+            const res = await fetch(`/api/crud`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(item),
+                body: JSON.stringify({ table, data: item }),
             });
             if (!res.ok) throw new Error("Gagal menambahkan data");
             const data = await res.json();
-            if (Array.isArray(data)) {
-                setItems(prev => [...prev, ...data]);
-            } else {
-                setItems(prev => [...prev, item]); // fallback
-            }
+            setItems(prev => [...prev, ...(Array.isArray(data) ? data : [item])]);
             return true;
         } catch (err) {
             console.error("add error:", err);
@@ -55,10 +51,10 @@ export function useCrud<T extends { id: string }>(table: string) {
     // --- UPDATE ---
     const update = async (id: string, item: Partial<T>): Promise<boolean> => {
         try {
-            const res = await fetch(`/api/crud/${table}/${id}`, {
+            const res = await fetch(`/api/crud`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(item),
+                body: JSON.stringify({ table, id, data: item }),
             });
             if (!res.ok) throw new Error("Gagal mengedit data");
             const data = await res.json();
@@ -77,7 +73,11 @@ export function useCrud<T extends { id: string }>(table: string) {
     // --- DELETE ---
     const remove = async (id: string): Promise<boolean> => {
         try {
-            const res = await fetch(`/api/crud/${table}/${id}`, { method: "DELETE" });
+            const res = await fetch(`/api/crud`, {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ table, id }),
+            });
             if (!res.ok) throw new Error("Gagal menghapus data");
             setItems(prev => prev.filter(el => el.id !== id));
             return true;
