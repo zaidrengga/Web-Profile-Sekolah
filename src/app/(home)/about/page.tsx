@@ -7,7 +7,7 @@ const About = () => {
             <div className="py-16 bg-white">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="text-center mb-12">
-                        <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Tentang {process.env.NEXT_PUBLIC_APP_NAME}</h2>
+                        <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Tentang <span className="text-primary">{process.env.NEXT_PUBLIC_APP_NAME}</span></h2>
                         <p className="text-lg text-gray-600">Keunggulan dalam pendidikan sejak 1999</p>
                     </div>
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">

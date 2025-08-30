@@ -17,10 +17,10 @@ const TeachersDashboardPage = () => {
   return (
     <div className="w-full grid grid-cols-6 gap-4">
       <div className="col-span-6 sm:col-span-4 rounded-lg border p-6 shadow-md">
-        <h1 className="text-2xl font-bold">Hello, Guru {guru?.nama}</h1>
-        <p className="text-gray-600">Selamat datang di dashboard guru.</p>
+        <h1 className="text-xl font-bold">Hello, {guru?.nama}</h1>
+        <p className="text-gray-600 text-2xl font-bold">Selamat datang di <span className="text-blue-600">Dashboard Guru</span>.</p>
         <p>Anda dapat mengakses informasi dan fitur khusus untuk guru di sini.</p>
-        {mapelGuru &&
+        {mapelGuru.length > 0 &&
           <div className="flex flex-col gap-2 mt-4">
             <h2 className="font-semibold">Mapel yang diampu:</h2>
             <div className="flex items-center flex-wrap">
@@ -34,9 +34,10 @@ const TeachersDashboardPage = () => {
 
       <div className="col-span-6 sm:col-span-2 p-6 rounded-xl border shadow-md flex flex-col items-center">
         <Image loader={imageLoader} src={user?.image || ""} alt="Avatar" width={100} height={100} className="rounded-full mb-4" />
-        <h2 className="text-lg font-semibold">{guru?.nama}</h2>
+        <h2 className="text-lg font-semibold text-center">{guru?.nama}</h2>
         <p className="text-gray-600">{guru?.nip}</p>
         {waliKelas && <p className='text-gray-600'>Wali Kelas {waliKelas.nama_kelas}</p>}
+        {guru?.jabatan && <p className='text-gray-600'>{guru?.jabatan}</p>}
       </div>
 
       {jadwalHariIni && jadwalHariIni.length > 0 &&

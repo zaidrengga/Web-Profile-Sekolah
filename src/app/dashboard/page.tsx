@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Loading from "@/components/LoadingLayout";
 import { useAuth } from "@/hooks/use-auth";
+import Loading from "@/components/ui/loading";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -33,6 +33,5 @@ export default function DashboardPage() {
     }
   }, [user, loading, router, navigating]);
 
-  // Tampilkan loader selama cek auth / redirect
-  return <Loading>Loading...</Loading>;
+  return <Loading />
 }

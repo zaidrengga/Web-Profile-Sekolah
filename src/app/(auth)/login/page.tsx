@@ -1,7 +1,9 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
+import { Eye, EyeClosed } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -10,6 +12,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [openPassword, setOpenPassword] = useState<boolean>(false);
 
   const { isAuthenticated, loading, login, error, setError } = useAuth();
 
@@ -49,15 +52,17 @@ export default function LoginPage() {
       ) : (
         <form
           onSubmit={handleLogin}
-          className="bg-white p-6 rounded-xl shadow-md w-80"
+          className="bg-white p-6 rounded-xl shadow-md w-80 space-y-4"
         >
-          <h2 className="text-xl font-bold mb-4 text-center">
-            Login Menggunakan Email Sekolah
+          <h2 className="text-2xl font-bold mb-4 text-center">
+            <span>Login</span>
+            <br />
+            <span className="text-primary">{process.env.NEXT_PUBLIC_APP_NAME}</span>
           </h2>
 
           {error && <p className="text-red-500 mb-2 text-center">{error}</p>}
 
-          <input
+          <Input
             type="email"
             placeholder="Email"
             autoComplete="email"
@@ -66,20 +71,27 @@ export default function LoginPage() {
               setEmail(e.target.value);
               setError("");
             }}
-            className="w-full p-2 border rounded mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
 
-          <input
-            type="password"
-            placeholder="Password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              setError("");
-            }}
-            className="w-full p-2 border rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+          <div className="relative">
+            <Input
+              type={openPassword ? "text" : "password"}
+              placeholder="Password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setError("");
+              }}
+            />
+            <button
+              type="button"
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+              onClick={() => setOpenPassword(!openPassword)}
+            >
+              {openPassword ? <Eye /> : <EyeClosed />}
+            </button>
+          </div>
 
           <Button type="submit" disabled={loading} className="w-full">
             {loading ? "Loading..." : "Login"}

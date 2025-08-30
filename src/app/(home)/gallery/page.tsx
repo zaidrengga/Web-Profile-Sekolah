@@ -19,7 +19,7 @@ const GalleryPage = () => {
     return (
         <div className='w-full p-10 py-20 flex flex-col items-center space-y-4'>
             <div className="space-y-2 text-center">
-                <h1 className="text-3xl font-bold">Galeri {process.env.NEXT_PUBLIC_APP_NAME}</h1>
+                <h1 className="text-3xl font-bold">Galeri <span className="text-primary">{process.env.NEXT_PUBLIC_APP_NAME}</span></h1>
                 <p className="text-gray-600">Galeri foto dan video dari kegiatan sekolah kami</p>
             </div>
 

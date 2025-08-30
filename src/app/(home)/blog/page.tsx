@@ -20,7 +20,7 @@ const BlogPage = () => {
     return (
         <div className='w-full p-10 py-20 flex flex-col items-center space-y-4'>
             <div className="space-y-2 text-center">
-                <h1 className="text-3xl font-bold">Blog {process.env.NEXT_PUBLIC_APP_NAME}</h1>
+                <h1 className="text-3xl font-bold">Blog <span className="text-primary">{process.env.NEXT_PUBLIC_APP_NAME}</span></h1>
                 <p className="text-gray-600">Blog tentang kegiatan sekolah kami</p>
             </div>
 

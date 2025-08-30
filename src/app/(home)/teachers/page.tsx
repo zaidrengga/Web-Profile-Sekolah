@@ -43,7 +43,7 @@ const Teachers = () => {
             <div className="py-20 bg-gradient-to-br from-gray-50 to-indigo-50">
                 <div className="px-4 sm:px-6 lg:px-8 flex flex-col items-center">
                     <div className="text-center mb-16">
-                        <h2 className="text-4xl md:text-5xl font-bold gradient-text mb-6">Jajaran Guru</h2>
+                        <h2 className="text-3xl font-bold gradient-text mb-6">Jajaran Guru <span className="text-primary">{process.env.NEXT_PUBLIC_APP_NAME}</span></h2>
                         <p className="text-xl text-gray-600 max-w-3xl mx-auto">Pendidik yang bersemangat tentang keberhasilan siswa</p>
                     </div>
 

@@ -329,11 +329,12 @@ export function DataTable<TData extends { id?: string | number }, TValue>({
                         )}
                     </TableBody>
                 </Table>
-                <div className="flex items-center justify-end space-x-2 p-4">
+                <div className="flex items-center justify-end space-x-2 p-2 bg-accent">
                     <div className="text-muted-foreground flex-1 text-sm">
                         {table.getFilteredRowModel().rows.length} total
                     </div>
                     <div className="space-x-2">
+                        <span className="text-sm text-gray-500">{table.getState().pagination.pageIndex + 1} of {table.getPageCount()} pages</span>
                         <Button
                             variant="outline"
                             size="sm"
